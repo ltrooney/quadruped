@@ -5,78 +5,108 @@ L2 = 0.4;
 L3 = 0.4;
 l = 1;  % length %
 w = 0.4; % width %
+timesteps = 10;
 
-position = [0; 0; 0; 1]; % x, y, z, 1 %
-orientation = [0; 0; 0; 1];  % roll, yaw, pitch, 1 %
+position = cell(1, timesteps);
+orientation = cell(1, timesteps);
+theta = cell(1, timesteps);
 
-theta = [
-    0 0 0;  % leg 1 %    
-    0 0 0;  % leg 2 %
-    0 0 0;  % leg 3 %
-    0 pi/6 -pi/4;  % leg 4 %
-    ];    
 
-% construct XYZ rotation matrix %
-Rx = [1 0 0 0; 
-    0 cos(orientation(1)) -sin(orientation(1)) 0;
-    0 sin(orientation(1)) cos(orientation(1)) 0;
-    0 0 0 1];
-Ry = [cos(orientation(2)) 0 sin(orientation(2)) 0; 
-    0 1 0 0;
-    -sin(orientation(2)) 0 cos(orientation(2)) 0;
-    0 0 0 1];
-Rz = [cos(orientation(3)) -sin(orientation(3)) 0 0; 
-    sin(orientation(3)) cos(orientation(3)) 0 0;
-    0 0 1 0;
-    0 0 0 1];
-
-Rxyz = Rx*Ry*Rz;
-
-% body transform matrix *
-Tm = Rxyz * [1 0 0 position(1); 0 1 0 position(2); 0 0 1 position(3); 0 0 0 1];
-
-% transformation from body to leg frames %
-Trb = Tm * [0 0 1 -l/2; 0 1 0 0; -1 0 0 w/2; 0 0 0 1];
-Trf = Tm * [0 0 1 l/2; 0 1 0 0; -1 0 0 w/2; 0 0 0 1];
-Tlf = Tm * [0 0 -1 l/2; 0 1 0 0; 1 0 0 -w/2; 0 0 0 1];
-Tlb = Tm * [0 0 -1 -l/2; 0 1 0 0; 1 0 0 -w/2; 0 0 0 1];
-
-body_coords = Tm * [0;0;0;1];
-
-leg_1_coords = coords(1, theta, Trb);
-leg_2_coords = coords(2, theta, Trf);
-leg_3_coords = coords(3, theta, Tlf);
-leg_4_coords = coords(4, theta, Tlb);
-
-% plotTop(body_coords);
-leg_coords = {leg_1_coords, leg_2_coords, leg_3_coords, leg_4_coords};
-
-hold on
-
-% draw body plane %
-body_plane_x = [leg_1_coords(1,1), leg_2_coords(1,1), leg_3_coords(1,1) leg_4_coords(1,1)];
-body_plane_y = [leg_1_coords(3,1), leg_2_coords(3,1), leg_3_coords(3,1) leg_4_coords(3,1)];
-body_plane_z = [leg_1_coords(2,1), leg_2_coords(2,1), leg_3_coords(2,1) leg_4_coords(2,1)];
-patch(body_plane_x, body_plane_y, body_plane_z, 'b');
-
-% draw links
-hold on
-for i = 1:4
-    leg = leg_coords{:,i};
-    line([leg(1,1); leg(1,2)], [leg(3,1); leg(3,2)], [leg(2,1); leg(2,2)]);
-    line([leg(1,3); leg(1,4)], [leg(3,3); leg(3,4)], [leg(2,3); leg(2,4)]);
-    line([leg(1,4); leg(1,5)], [leg(3,4); leg(3,5)], [leg(2,4); leg(2,5)]);
+for x = 1:timesteps
+    position{1,x} = [0; 0; 0; 1]; % x, y, z, 1 %
+    
+    orientation{1,x} = [0; 0; 0; 1];  % roll, yaw, pitch, 1 %
+    
+    theta{1,x} = [
+        0 0 0;  % leg 1 %    
+        0 0 0;  % leg 2 %
+        0 0 0;  % leg 3 %
+        0 x 0;  % leg 4 %
+    ];  
 end
 
-% draw coordinate frame origins %
-plot3d(body_coords);
-plotLeg3d(cell2mat(leg_coords));
 
-% set axis boundaries %
-xlim([-2 2])
-ylim([-2 2])
-zlim([-2 2])
-view(3)
+for t = 1:timesteps  
+    % construct XYZ rotation matrix %
+    Rx = [1 0 0 0; 
+        0 cos(orientation{t}(1)) -sin(orientation{t}(1)) 0;
+        0 sin(orientation{t}(1)) cos(orientation{t}(1)) 0;
+        0 0 0 1];
+    Ry = [cos(orientation{t}(2)) 0 sin(orientation{t}(2)) 0; 
+        0 1 0 0;
+        -sin(orientation{t}(2)) 0 cos(orientation{t}(2)) 0;
+        0 0 0 1];
+    Rz = [cos(orientation{t}(3)) -sin(orientation{t}(3)) 0 0; 
+        sin(orientation{t}(3)) cos(orientation{t}(3)) 0 0;
+        0 0 1 0;
+        0 0 0 1];
+
+    Rxyz = Rx*Ry*Rz;
+
+    % body transform matrix *
+    Tm = Rxyz * [1 0 0 position{t}(1); 0 1 0 position{t}(2); 0 0 1 position{t}(3); 0 0 0 1];
+
+    % transformation from body to leg frames %
+    Trb = Tm * [0 0 1 -l/2; 0 1 0 0; -1 0 0 w/2; 0 0 0 1];
+    Trf = Tm * [0 0 1 l/2; 0 1 0 0; -1 0 0 w/2; 0 0 0 1];
+    Tlf = Tm * [0 0 -1 l/2; 0 1 0 0; 1 0 0 -w/2; 0 0 0 1];
+    Tlb = Tm * [0 0 -1 -l/2; 0 1 0 0; 1 0 0 -w/2; 0 0 0 1];
+
+    body_coords = Tm * [0;0;0;1];
+
+    leg_1_coords = coords(1, theta{t}, Trb);
+    leg_2_coords = coords(2, theta{t}, Trf);
+    leg_3_coords = coords(3, theta{t}, Tlf);
+    leg_4_coords = coords(4, theta{t}, Tlb);
+
+    leg_coords = {leg_1_coords, leg_2_coords, leg_3_coords, leg_4_coords};
+    
+    render(body_coords, leg_coords);
+    pause(0.01);
+end
+
+
+function render(body_coords, leg_coords)
+    hold on
+
+    % draw body plane %
+    body_plane_x = zeros(4,1);
+    body_plane_y = zeros(4,1);
+    body_plane_z = zeros(4,1);
+
+    for i = 1:4
+        body_plane_x(i) = leg_coords{1,i}(1,1);
+        body_plane_y(i) = leg_coords{1,i}(3,1);
+        body_plane_z(i) = leg_coords{1,i}(2,1);
+    end
+    patch(body_plane_x, body_plane_y, body_plane_z, 'b');
+
+    % draw links
+    for i = 1:4
+        leg = leg_coords{1,i};
+        line([leg(1,1); leg(1,2)], [leg(3,1); leg(3,2)], [leg(2,1); leg(2,2)], 'LineWidth', 4);
+        line([leg(1,3); leg(1,4)], [leg(3,3); leg(3,4)], [leg(2,3); leg(2,4)], 'LineWidth', 4);
+        line([leg(1,4); leg(1,5)], [leg(3,4); leg(3,5)], [leg(2,4); leg(2,5)], 'LineWidth', 4);
+    end
+
+    % draw coordinate frame origins %
+    h = plot3d(body_coords);
+    plotLeg3d(cell2mat(leg_coords));
+%     c = cell2mat(leg_coords);
+%     h.XData = c(1,:);
+%     h.YData = c(3,:);
+%     h.ZData = c(2,:);
+    
+    % set axis boundaries %
+    xlim([-2 2])
+    ylim([-2 2])
+    zlim([-2 2])
+    view(3)
+
+    hold off
+    
+%     drawnow
+end
 
 function leg_coords = coords(leg_num, theta, T_leg_base)
 % Compute foot coordinates of the leg given by leg_num
@@ -135,8 +165,8 @@ function plotLeg3d(leg_coords)
     end
 end
 
-function plot3d(coords)
-    plot3(coords(1), coords(3), coords(2), '-o');
+function p = plot3d(coords)
+    p = plot3(coords(1), coords(3), coords(2), '-o');
 end
 
     
