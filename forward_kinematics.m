@@ -5,7 +5,7 @@ L2 = 0.4;
 L3 = 0.4;
 l = 1;  % length %
 w = 0.4; % width %
-timesteps = 10;
+timesteps = 100;
 
 position = cell(1, timesteps);
 orientation = cell(1, timesteps);
@@ -15,13 +15,13 @@ theta = cell(1, timesteps);
 for x = 1:timesteps
     position{1,x} = [0; 0; 0; 1]; % x, y, z, 1 %
     
-    orientation{1,x} = [0; 0; 0; 1];  % roll, yaw, pitch, 1 %
+    orientation{1,x} = [0.2*sin(x / 2); 0; 0; 1];  % roll, yaw, pitch, 1 %
     
     theta{1,x} = [
         0 0 0;  % leg 1 %    
         0 0 0;  % leg 2 %
         0 0 0;  % leg 3 %
-        0 x 0;  % leg 4 %
+        0 0 0;  % leg 4 %
     ];  
 end
 
@@ -67,8 +67,12 @@ end
 
 
 function render(body_coords, leg_coords)
+    
+    % draw coordinate frame origins %
+    h = plot3d(body_coords);
     hold on
-
+    plotLeg3d(cell2mat(leg_coords));
+    
     % draw body plane %
     body_plane_x = zeros(4,1);
     body_plane_y = zeros(4,1);
@@ -79,28 +83,21 @@ function render(body_coords, leg_coords)
         body_plane_y(i) = leg_coords{1,i}(3,1);
         body_plane_z(i) = leg_coords{1,i}(2,1);
     end
+    
     patch(body_plane_x, body_plane_y, body_plane_z, 'b');
-
+    
     % draw links
     for i = 1:4
         leg = leg_coords{1,i};
         line([leg(1,1); leg(1,2)], [leg(3,1); leg(3,2)], [leg(2,1); leg(2,2)], 'LineWidth', 4);
         line([leg(1,3); leg(1,4)], [leg(3,3); leg(3,4)], [leg(2,3); leg(2,4)], 'LineWidth', 4);
         line([leg(1,4); leg(1,5)], [leg(3,4); leg(3,5)], [leg(2,4); leg(2,5)], 'LineWidth', 4);
-    end
-
-    % draw coordinate frame origins %
-    h = plot3d(body_coords);
-    plotLeg3d(cell2mat(leg_coords));
-%     c = cell2mat(leg_coords);
-%     h.XData = c(1,:);
-%     h.YData = c(3,:);
-%     h.ZData = c(2,:);
+    end    
     
     % set axis boundaries %
-    xlim([-2 2])
-    ylim([-2 2])
-    zlim([-2 2])
+    xlim([-1 1])
+    ylim([-1 1])
+    zlim([-1 0.5])
     view(3)
 
     hold off
